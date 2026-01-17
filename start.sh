@@ -1,16 +1,16 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 
-_term() {
-    echo "Caught SIGTERM signal. Logging out and cleaning up."
-    trap - TERM
-    kill -TERM $TAILSCALE_DAEMON_PID
-    wait $TAILSCALE_DAEMON_PID
-}
+/app/tailscaled \
+  --tun=userspace-networking \
+  --netfilter-mode=off \
+  --state=/var/lib/tailscale/tailscaled.state \
+  --socket=/var/run/tailscale/tailscaled.sock &
 
-trap _term TERM
+sleep 3
 
-/app/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock &
-TAILSCALE_DAEMON_PID=$!
-/app/tailscale up --ssh --authkey=${TAILSCALE_AUTHKEY} --hostname=${KOYEB_APP_NAME}-${KOYEB_SERVICE_NAME}
-
-wait
+/app/tailscale up \
+  --authkey=${TAILSCALE_AUTHKEY} \
+  --ssh \
+  --hostname=koyeb-app \
+  --accept-dns=false
